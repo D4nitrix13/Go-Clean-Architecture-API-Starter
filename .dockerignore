@@ -1,0 +1,10 @@
+# Ignore Postgres data directory created by the container
+testdata/postgres
+testdata/postgres/**
+
+# Optional: Ignore Dockerfile and Docker Compose files
+Dockerfile
+docker-compose.yml
+.git
+.gitignore
+*.md

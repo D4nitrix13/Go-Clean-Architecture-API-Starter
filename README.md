@@ -3,7 +3,7 @@
 <!-- GitLab: https://gitlab.com/D4nitrix13 -->
 <!-- Email: danielperezdev@proton.me -->
 
-# Go RESTful API Starter Kit (Boilerplate) — Documentación en Español
+# Go RESTful API Starter Kit (Boilerplate)
 
 Este proyecto es un **starter kit** diseñado para aprender y desarrollar **APIs RESTful en Go**, siguiendo buenas prácticas profesionales como **Clean Architecture**, principios **SOLID**, separación de capas, pruebas unitarias y uso de herramientas modernas para despliegue y automatización.
 
@@ -122,7 +122,7 @@ http://127.0.0.1:8080
 
 ---
 
-### 2. Obtener token JWT
+### 2. Obtener token JWT & ID De Album
 
 ```bash
 TOKEN=$(
@@ -133,6 +133,15 @@ TOKEN=$(
 )
 ```
 
+```bash
+ALBUM_ID=$(
+  /bin/curl -s -X GET \
+    -H "Authorization: Bearer $TOKEN" \
+    http://localhost:8080/v1/albums \
+  | jq -r '.items[0].id'
+)
+```
+
 ---
 
 ### 3. Listar álbumes
@@ -140,7 +149,7 @@ TOKEN=$(
 ```bash
 /bin/curl -X GET \
   -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8080/v1/albums -s
+  http://localhost:8080/v1/albums -s | jq --color-output --indent 2 --ascii-output
 ```
 
 ---
@@ -151,8 +160,11 @@ TOKEN=$(
 /bin/curl -X POST \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"title":"New Album","artist":"Daniel","price":25.5}' \
-  http://localhost:8080/v1/albums -s
+  -d '{
+    "name": "New Album",
+    "artist": "Daniel",
+    "price": 25.5
+  }' http://localhost:8080/v1/albums -s
 ```
 
 ---
@@ -160,11 +172,14 @@ TOKEN=$(
 ### 5. Actualizar álbum
 
 ```bash
-/bin/curl -X PUT \
+/bin/curl -s -X PUT \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"title":"Updated","artist":"Daniel P.","price":199.99}' \
-  http://localhost:8080/v1/albums/1 -s
+  -d '{
+    "name": "Updated",
+    "artist": "Daniel P.",
+    "price": 199.99
+  }' "http://localhost:8080/v1/albums/$ALBUM_ID" | jq --color-output --indent 2 --ascii-output
 ```
 
 ---
@@ -172,9 +187,9 @@ TOKEN=$(
 ### 6. Eliminar álbum
 
 ```bash
-/bin/curl -X DELETE \
+/bin/curl -s -X DELETE \
   -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8080/v1/albums/1 -s
+  "http://localhost:8080/v1/albums/$ALBUM_ID" | jq --color-output --indent 2 --ascii-output
 ```
 
 ---
@@ -204,19 +219,18 @@ TOKEN=$(
 
 ---
 
-## Tareas Comunes con Makefile
+## Tareas con Makefile
 
-| Comando              | Descripción                        |
-| -------------------- | ---------------------------------- |
-| `make db-start`      | Levantar PostgreSQL en Docker      |
-| `make migrate`       | Ejecutar migraciones pendientes    |
-| `make migrate-new`   | Crear nuevo archivo de migración   |
-| `make migrate-down`  | Revertir última migración          |
-| `make migrate-reset` | Resetear BD y aplicar todo desde 0 |
-| `make run`           | Ejecutar API                       |
-| `make run-live`      | Ejecutar API con live reload       |
-| `make build`         | Compilar el binario                |
-| `make build-docker`  | Construir imagen Docker            |
+| Comando              | Descripción                                                                      |
+| -------------------- | -------------------------------------------------------------------------------- |
+| `make`               | Muestra la ayuda con todos los comandos disponibles (`help`).                    |
+| `make help`          | Lista los comandos del Makefile y su descripción.                                |
+| `make up`            | Levanta todos los servicios en segundo plano y aplica las migraciones.           |
+| `make stop`          | Detiene los contenedores sin eliminarlos.                                        |
+| `make down`          | Elimina contenedores, redes y volúmenes del proyecto.                            |
+| `make migrate`       | Aplica todas las migraciones pendientes (`migrate up`).                          |
+| `make migrate-down`  | Revierte la última migración aplicada (`migrate down 1`).                        |
+| `make migrate-reset` | Elimina el esquema de la base de datos y vuelve a aplicar todas las migraciones. |
 
 ---
 

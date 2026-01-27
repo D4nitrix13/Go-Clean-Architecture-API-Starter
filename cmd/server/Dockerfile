@@ -1,41 +1,48 @@
+# ============================
+# Build stage: compile Go app
+# ============================
 FROM golang:alpine AS build
-RUN apk update && \
-    apk add curl \
-    git \
-    bash \
-    make \
-    ca-certificates && \
-    rm -rf /var/cache/apk/*
 
-# Install migrate which will be used by entrypoint.sh to perform DB migration
-ARG MIGRATE_VERSION=4.7.1
-ADD https://github.com/golang-migrate/migrate/releases/download/v${MIGRATE_VERSION}/migrate.linux-amd64.tar.gz /tmp
-RUN /bin/tar -xzf /tmp/migrate.linux-amd64.tar.gz -C /usr/local/bin && /bin/mv /usr/local/bin/migrate.linux-amd64 /usr/local/bin/migrate
+# Install build tools and dependencies
+RUN /sbin/apk update && \
+    /sbin/apk add --no-cache curl git make ca-certificates && \
+    /bin/rm -rf /var/cache/apk/*
 
 WORKDIR /app
 
-# Copy module files first so that they don't need to be downloaded again if no change
+# Copy go.mod and go.sum first to leverage Docker layer caching
 COPY ./go.* ./
-RUN /go mod download
-RUN /go mod verify
+RUN /usr/local/go/bin/go mod download
+RUN /usr/local/go/bin/go mod verify
 
-# Copy source files and build the binary
+# Copy source code and build the binary
 COPY . .
-RUN /bin/make build
+RUN /usr/local/go/bin/go build -o server ./cmd/server
 
-# Final stage
+# ============================
+# Final stage: runtime image
+# ============================
 FROM alpine:latest
 
 ARG USERNAME=d4nitrix13
-RUN /bin/apk --no-cache add ca-certificates bash
-RUN /bin/mkdir -p /var/log/app
+
+# Create user and log directory
+# En Alpine, 'adduser' está en el PATH
+RUN adduser -D -g "" ${USERNAME} && /bin/mkdir -p /var/log/app
+
 WORKDIR /app/
-COPY --chown=${USERNAME}:${USERNAME} --from=build /usr/local/bin/migrate /usr/local/bin
-COPY --chown=${USERNAME}:${USERNAME} --from=build /app/migrations ./migrations/
-COPY --chown=${USERNAME}:${USERNAME} --from=build /app/server .
-COPY --chown=${USERNAME}:${USERNAME} --from=build /app/cmd/server/entrypoint.sh .
-COPY --chown=${USERNAME}:${USERNAME} --from=build /app/config/*.yml ./config/
+
+# Copy only the binary and config
+COPY --from=build /app/server .
+COPY --from=build /app/config/*.yml ./config/
+
+# Adjust ownership
 RUN /bin/chown -R ${USERNAME}:${USERNAME} .
+
 USER ${USERNAME}
 
-ENTRYPOINT [ "./entrypoint.sh" ]
+# Document port
+EXPOSE 8080
+
+# Run the Go server when the container starts
+CMD ["/app/server"]
