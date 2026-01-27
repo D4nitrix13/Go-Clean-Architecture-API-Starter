@@ -6,7 +6,7 @@
 
 ## **Vulnerability Reporting**
 
-*At [FastAPI E-Commerce API], we take the security of our code and our users very seriously. If you discover a vulnerability that could compromise the security of the project, we encourage you to let us know immediately. We appreciate and reward the efforts of those who help us improve the security of our software.*
+*At [Go-Clean-Architecture-API-Starter], we take the security of our code and our users very seriously. If you discover a vulnerability that could compromise the security of the project, we encourage you to let us know immediately. We appreciate and reward the efforts of those who help us improve the security of our software.*
 
 **Please follow these guidelines when reporting a vulnerability:**
 
