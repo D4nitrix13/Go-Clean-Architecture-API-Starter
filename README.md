@@ -66,28 +66,10 @@ git clone https://github.com/D4nitrix13/Go-Clean-Architecture-API-Starter.git
 cd Go-Clean-Architecture-API-Starter
 ```
 
-**Levantar PostgreSQL en Docker:**
+**Ejecutar Aplicación en Docker:**
 
 ```bash
-make db-start
-```
-
-**Insertar datos de prueba:**
-
-```bash
-make testdata
-```
-
-**Ejecutar el servidor:**
-
-```bash
-make run
-```
-
-**Ejecutar con live reload (requiere fswatch):**
-
-```bash
-make run-live
+make up
 ```
 
 La API estará disponible en:
