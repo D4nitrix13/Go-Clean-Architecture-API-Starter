@@ -1,36 +1,15 @@
 version: "3.9"
 
 services:
-  # Application server
-  app:
-    container_name: app
-    image: server
-    build:
-      context: .
-      dockerfile: cmd/server/Dockerfile
-    ports:
-      - "8080:8080"
-    expose:
-      - "8080"
-    environment:
-      APP_ENV: local
-      APP_DSN: postgres://postgres:postgres@db:5432/go_restful?sslmode=disable
-    volumes:
-      - /tmp/app:/var/log/app
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
-
   # Database service
   db:
     container_name: db
     image: postgres:15-alpine
     restart: always
     ports:
-      - "5432:5432"
+      - "5432:5432/tcp"
     expose:
-      - "5432"
+      - "5432/tcp"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -44,10 +23,10 @@ services:
       timeout: 5s
       retries: 5
 
-  # Migration service (only used with `docker compose run migrate ...`)
+  # Migration runner (genérico, sin 'up' fijo)
   migrate:
+    container_name: migrate
     image: migrate/migrate:v4.17.1
-    # Use the following entrypoint to run migrations
     entrypoint:
       - "migrate"
       - "-path=/migrations"
@@ -57,3 +36,27 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    restart: "no"
+
+  # Application server
+  app:
+    container_name: app
+    image: server
+    build:
+      context: .
+      dockerfile: cmd/server/Dockerfile
+    ports:
+      - "8080:8080/tcp"
+    expose:
+      - "8080/tcp"
+    environment:
+      APP_ENV: local
+      APP_DSN: postgres://postgres:postgres@db:5432/go_restful?sslmode=disable
+    volumes:
+      - /tmp/app:/var/log/app
+    # (por ahora sin dependencia explícita de migrate;
+    # lo controla el Makefile)
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
